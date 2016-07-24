@@ -27,7 +27,8 @@ class Pony(object):
                 'port': config['PONY_PORT'],
                 'user': config['PONY_USER'],
                 'passwd': config['PONY_PASSWORD'],
-                'db': config['PONY_DB']
+                'db': config['PONY_DB'],
+                'charset': config['PONY_CHARSET']
             })
         elif db_type == 'postgres':
             kwargs.update({
@@ -54,6 +55,7 @@ class Pony(object):
         app.config.setdefault('PONY_USER', None)
         app.config.setdefault('PONY_PASSWORD', None)
         app.config.setdefault('PONY_DB', None)
+        app.config.setdefault('PONY_CHARSET', 'utf8')
 
         db_type = app.config['PONY_TYPE']
 
