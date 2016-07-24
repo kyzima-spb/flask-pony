@@ -9,7 +9,7 @@ from setuptools import setup
 
 setup(
     name='Flask-Pony',
-    version='0.0.3',
+    version='0.0.4',
     url='https://github.com/kyzima-spb/flask-pony',
     license='BSD',
     author='Kirill Vercetti',

@@ -22,7 +22,6 @@ class Pony(object):
         if db_type == 'sqlite':
             args.append(config['PONY_DBNAME'] or ':memory:')
         elif db_type == 'mysql':
-            #3306
             kwargs.update({
                 'host': config['PONY_HOST'],
                 'port': config['PONY_PORT'],
@@ -31,7 +30,6 @@ class Pony(object):
                 'db': config['PONY_DBNAME']
             })
         elif db_type == 'postgres':
-            #5432
             kwargs.update({
                 'host': config['PONY_HOST'],
                 'port': config['PONY_PORT'],
@@ -40,7 +38,6 @@ class Pony(object):
                 'database': config['PONY_DBNAME']
             })
         elif db_type == 'oracle':
-            #1521
             args.append('{user}/{password}@{host}:{port}/{dbname}'.format(
                 user=config['PONY_USER'],
                 password=config['PONY_PASSWORD'],
@@ -52,10 +49,22 @@ class Pony(object):
         return Database(*args, **kwargs)
 
     def init_app(self, app):
-        # app.config.setdefault('PONY_TYPE', 'sqlite')
+        app.config.setdefault('PONY_TYPE', 'sqlite')
         app.config.setdefault('PONY_HOST', 'localhost')
+        app.config.setdefault('PONY_USER', None)
+        app.config.setdefault('PONY_PASSWORD', None)
+        app.config.setdefault('PONY_DB', None)
 
-        print(app.config['PONY_TYPE'])
+        db_type = app.config['PONY_TYPE']
+
+        if db_type == 'sqlite':
+            app.config.setdefault('PONY_DB', ':memory:')
+        elif db_type == 'mysql':
+            app.config.setdefault('PONY_PORT', 3306)
+        elif db_type == 'postgres':
+            app.config.setdefault('PONY_PORT', 5432)
+        elif db_type == 'oracle':
+            app.config.setdefault('PONY_PORT', 1521)
 
         if hasattr(app, 'teardown_appcontext'):
             app.teardown_appcontext(self.teardown)
