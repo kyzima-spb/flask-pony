@@ -15,7 +15,7 @@ class Pony(object):
 
     def create(self):
         config = current_app.config
-        db_type = config('PONY_TYPE')
+        db_type = config['PONY_TYPE']
         args = [db_type]
         kwargs = {}
 
@@ -24,20 +24,20 @@ class Pony(object):
         elif db_type == 'mysql':
             #3306
             kwargs.update({
-                host: config['PONY_HOST'],
-                port: config['PONY_PORT'],
-                user: config['PONY_USER'],
-                passwd: config['PONY_PASSWORD'],
-                db: config['PONY_DBNAME']
+                'host': config['PONY_HOST'],
+                'port': config['PONY_PORT'],
+                'user': config['PONY_USER'],
+                'passwd': config['PONY_PASSWORD'],
+                'db': config['PONY_DBNAME']
             })
         elif db_type == 'postgres':
             #5432
             kwargs.update({
-                host: config['PONY_HOST'],
-                port: config['PONY_PORT'],
-                user: config['PONY_USER'],
-                password: config['PONY_PASSWORD'],
-                database: config['PONY_DBNAME']
+                'host': config['PONY_HOST'],
+                'port': config['PONY_PORT'],
+                'user': config['PONY_USER'],
+                'password': config['PONY_PASSWORD'],
+                'database': config['PONY_DBNAME']
             })
         elif db_type == 'oracle':
             #1521
