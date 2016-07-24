@@ -20,14 +20,14 @@ class Pony(object):
         kwargs = {}
 
         if db_type == 'sqlite':
-            args.append(config['PONY_DBNAME'] or ':memory:')
+            args.append(config['PONY_DB'])
         elif db_type == 'mysql':
             kwargs.update({
                 'host': config['PONY_HOST'],
                 'port': config['PONY_PORT'],
                 'user': config['PONY_USER'],
                 'passwd': config['PONY_PASSWORD'],
-                'db': config['PONY_DBNAME']
+                'db': config['PONY_DB']
             })
         elif db_type == 'postgres':
             kwargs.update({
@@ -35,7 +35,7 @@ class Pony(object):
                 'port': config['PONY_PORT'],
                 'user': config['PONY_USER'],
                 'password': config['PONY_PASSWORD'],
-                'database': config['PONY_DBNAME']
+                'database': config['PONY_DB']
             })
         elif db_type == 'oracle':
             args.append('{user}/{password}@{host}:{port}/{dbname}'.format(
@@ -43,7 +43,7 @@ class Pony(object):
                 password=config['PONY_PASSWORD'],
                 host=config['PONY_HOST'],
                 port=config['PONY_PORT'],
-                dbname=config['PONY_DBNAME']
+                dbname=config['PONY_DB']
             ))
 
         return Database(*args, **kwargs)
