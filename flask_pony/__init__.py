@@ -2,15 +2,11 @@
 
 from __future__ import print_function
 
-from pony.orm import Database, sql_debug
+from pony.orm import Database
 from flask import current_app
-try:
-    from flask import _app_ctx_stack as stack
-except ImportError:
-    from flask import _request_ctx_stack as stack
 
 
-__version__ = '0.0.6'
+__version__ = '0.0.7'
 
 
 class Pony(object):
@@ -20,78 +16,69 @@ class Pony(object):
         if app is not None:
             self.init_app(app)
 
-    def create(self):
-        config = current_app.config
-        db_type = config['PONY_TYPE']
+    def __get_app(self):
+        if current_app:
+            return current_app
+
+        if self.app is not None:
+            return self.app
+
+        raise RuntimeError('Application not found!')
+
+    def get_db(self):
+        config = self.__get_app().config
+        db_type = config['DB_TYPE']
         args = [db_type]
         kwargs = {}
 
         if db_type == 'sqlite':
-            args.append(config['PONY_DB'])
+            kwargs.update({
+                'filename': config['DB_NAME'],
+                'create_db': True
+            })
         elif db_type == 'mysql':
             kwargs.update({
-                'host': config['PONY_HOST'],
-                'port': config['PONY_PORT'],
-                'user': config['PONY_USER'],
-                'passwd': config['PONY_PASSWORD'],
-                'db': config['PONY_DB'],
-                'charset': config['PONY_CHARSET']
+                'host': config['DB_HOST'],
+                'port': config['DB_PORT'],
+                'user': config['DB_USER'],
+                'passwd': config['DB_PASSWORD'],
+                'db': config['DB_NAME'],
+                'charset': config['DB_CHARSET']
             })
         elif db_type == 'postgres':
             kwargs.update({
-                'host': config['PONY_HOST'],
-                'port': config['PONY_PORT'],
-                'user': config['PONY_USER'],
-                'password': config['PONY_PASSWORD'],
-                'database': config['PONY_DB']
+                'host': config['DB_HOST'],
+                'port': config['DB_PORT'],
+                'user': config['DB_USER'],
+                'password': config['DB_PASSWORD'],
+                'database': config['DB_NAME']
             })
         elif db_type == 'oracle':
             args.append('{user}/{password}@{host}:{port}/{dbname}'.format(
-                user=config['PONY_USER'],
-                password=config['PONY_PASSWORD'],
-                host=config['PONY_HOST'],
-                port=config['PONY_PORT'],
-                dbname=config['PONY_DB']
+                user=config['DB_USER'],
+                password=config['DB_PASSWORD'],
+                host=config['DB_HOST'],
+                port=config['DB_PORT'],
+                dbname=config['DB_NAME']
             ))
 
         return Database(*args, **kwargs)
 
     def init_app(self, app):
-        app.config.setdefault('PONY_TYPE', 'sqlite')
-        app.config.setdefault('PONY_HOST', 'localhost')
-        app.config.setdefault('PONY_USER', None)
-        app.config.setdefault('PONY_PASSWORD', None)
-        app.config.setdefault('PONY_DB', None)
-        app.config.setdefault('PONY_CHARSET', 'utf8')
+        app.config.setdefault('DB_TYPE', 'sqlite')
+        app.config.setdefault('DB_HOST', 'localhost')
+        app.config.setdefault('DB_USER', None)
+        app.config.setdefault('DB_PASSWORD', None)
+        app.config.setdefault('DB_NAME', None)
+        app.config.setdefault('DB_CHARSET', 'utf8')
 
-        db_type = app.config['PONY_TYPE']
+        db_type = app.config['DB_TYPE']
 
         if db_type == 'sqlite':
-            app.config.setdefault('PONY_DB', ':memory:')
+            app.config['DB_NAME'] = ':memory:'
         elif db_type == 'mysql':
-            app.config.setdefault('PONY_PORT', 3306)
+            app.config['DB_PORT'] = 3306
         elif db_type == 'postgres':
-            app.config.setdefault('PONY_PORT', 5432)
+            app.config['DB_PORT'] = 5432
         elif db_type == 'oracle':
-            app.config.setdefault('PONY_PORT', 1521)
-
-        if hasattr(app, 'teardown_appcontext'):
-            app.teardown_appcontext(self.teardown)
-        else:
-            app.teardown_request(self.teardown)
-
-    def db(self):
-        sql_debug(current_app.debug)
-
-        ctx = stack.top
-
-        if ctx is not None:
-            if not hasattr(ctx, 'pony_orm'):
-                ctx.pony_orm = self.create()
-            return ctx.pony_orm
-
-    def teardown(self, exception):
-        ctx = stack.top
-
-        if hasattr(ctx, 'pony_orm'):
-            pass
+            app.config['DB_PORT'] = 1521
