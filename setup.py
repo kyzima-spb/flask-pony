@@ -4,7 +4,7 @@ Flask-Pony
 
 
 """
-from setuptools import setup
+from setuptools import setup, find_packages
 
 from flask_pony import __version__ as version
 
@@ -18,7 +18,7 @@ setup(
     author_email='office@kyzima-spb.com',
     description='',
     long_description=__doc__,
-    packages=['flask_pony'],
+    packages=find_packages(),
     zip_safe=False,
     include_package_data=True,
     platforms='any',
