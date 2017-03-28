@@ -1,9 +1,16 @@
+# coding: utf-8
+
+from __future__ import print_function
+
 from pony.orm import Database, sql_debug
 from flask import current_app
 try:
     from flask import _app_ctx_stack as stack
 except ImportError:
     from flask import _request_ctx_stack as stack
+
+
+__version__ = '0.0.6'
 
 
 class Pony(object):
