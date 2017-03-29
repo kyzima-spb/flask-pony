@@ -66,19 +66,20 @@ class Pony(object):
 
     def init_app(self, app):
         app.config.setdefault('DB_TYPE', 'sqlite')
+
+        db_type = app.config['DB_TYPE']
+
+        if db_type == 'sqlite':
+            app.config.setdefault('DB_NAME', ':memory:')
+        elif db_type == 'mysql':
+            app.config.setdefault('DB_PORT', 3306)
+        elif db_type == 'postgres':
+            app.config.setdefault('DB_PORT', 5432)
+        elif db_type == 'oracle':
+            app.config.setdefault('DB_PORT', 1521)
+
         app.config.setdefault('DB_HOST', 'localhost')
         app.config.setdefault('DB_USER', None)
         app.config.setdefault('DB_PASSWORD', None)
         app.config.setdefault('DB_NAME', None)
         app.config.setdefault('DB_CHARSET', 'utf8')
-
-        db_type = app.config['DB_TYPE']
-
-        if db_type == 'sqlite':
-            app.config['DB_NAME'] = ':memory:'
-        elif db_type == 'mysql':
-            app.config['DB_PORT'] = 3306
-        elif db_type == 'postgres':
-            app.config['DB_PORT'] = 5432
-        elif db_type == 'oracle':
-            app.config['DB_PORT'] = 1521
