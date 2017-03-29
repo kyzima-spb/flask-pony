@@ -6,7 +6,7 @@ from pony.orm import Database
 from flask import current_app
 
 
-__version__ = '0.0.7'
+__version__ = '1.0.0'
 
 
 class Pony(object):

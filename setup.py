@@ -1,7 +1,13 @@
 """
 Flask-Pony
--------------
+----------
 
+PonyORM for your Flask application.
+
+GitHub
+------
+
+`Uses and documentation <https://github.com/kyzima-spb/flask-pony>`_
 
 """
 from setuptools import setup, find_packages
@@ -16,7 +22,7 @@ setup(
     license='BSD',
     author='Kirill Vercetti',
     author_email='office@kyzima-spb.com',
-    description='',
+    description='PonyORM for your Flask application',
     long_description=__doc__,
     packages=find_packages(),
     zip_safe=False,
