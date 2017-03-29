@@ -12,11 +12,10 @@ GitHub
 """
 from setuptools import setup, find_packages
 
-from flask_pony.version import __version__
 
 setup(
     name='Flask-Pony',
-    version=__version__,
+    version='1.0.1',
     url='https://github.com/kyzima-spb/flask-pony',
     license='BSD',
     author='Kirill Vercetti',

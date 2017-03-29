@@ -5,7 +5,7 @@ from __future__ import print_function
 from pony.orm import Database
 from flask import current_app
 
-from .version import __version__
+__version__ = '1.0.1'
 
 
 class Pony(object):
