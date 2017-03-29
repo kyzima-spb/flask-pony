@@ -1,2 +1,5 @@
 *.sqlite
+*.egg-info
 env/
+dist/
+build/
