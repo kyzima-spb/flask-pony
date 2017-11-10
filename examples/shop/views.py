@@ -17,7 +17,8 @@
 from flask import request, abort, redirect, url_for, render_template
 from pony.orm import db_session, ObjectNotFound
 
-from . import app, db
+from . import app
+from .models import Customer
 from .forms import CustomerForm
 
 
@@ -25,7 +26,7 @@ from .forms import CustomerForm
 @db_session
 def customer_show(customer_id):
     try:
-        return render_template('customer/show.html', customer=db.Customer[customer_id])
+        return render_template('customer/show.html', customer=Customer[customer_id])
     except ObjectNotFound:
         abort(404)
 
@@ -36,7 +37,7 @@ def customer_register():
 
     if form.validate_on_submit():
         with db_session:
-            customer = db.Customer(email=form.email.data,
+            customer = Customer(email=form.email.data,
                                    password=form.password.data,
                                    name=form.name.data,
                                    country=form.country.data,
@@ -50,7 +51,7 @@ def customer_register():
 @db_session
 def customer_edit(customer_id):
     try:
-        customer = db.Customer[customer_id]
+        customer = Customer[customer_id]
     except ObjectNotFound:
         abort(404)
 

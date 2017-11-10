@@ -24,8 +24,8 @@ app = Flask(__name__)
 app.config.from_object('configmodule.Config')
 
 pony = Pony(app)
-db = pony.db
-
 CSRFProtect(app)
 
-from . import views
+from . import models, views
+
+pony.connect(models)
