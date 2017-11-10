@@ -1,15 +1,33 @@
 # coding: utf-8
+#
+# Copyright 2017 Kirill Vercetti
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
 
 from __future__ import print_function
 
-from pony.orm import Database
 from flask import current_app
+from pony_database_facade import DatabaseFacade
 
-__version__ = '1.0.1'
+__version__ = '2.0.0'
 
 
 class Pony(object):
+    __slots__ = ('__facade', 'app')
+
     def __init__(self, app=None):
+        self.__facade = None
+
         self.app = app
 
         if app is not None:
@@ -24,61 +42,17 @@ class Pony(object):
 
         raise RuntimeError('Application not found!')
 
-    def get_db(self):
-        config = self.__get_app().config
-        db_type = config['DB_TYPE']
-        args = [db_type]
-        kwargs = {}
+    @property
+    def db(self):
+        if self.__facade is not None:
+            return self.__facade.db
 
-        if db_type == 'sqlite':
-            kwargs.update({
-                'filename': config['DB_NAME'],
-                'create_db': True
-            })
-        elif db_type == 'mysql':
-            kwargs.update({
-                'host': config['DB_HOST'],
-                'port': config['DB_PORT'],
-                'user': config['DB_USER'],
-                'passwd': config['DB_PASSWORD'],
-                'db': config['DB_NAME'],
-                'charset': config['DB_CHARSET']
-            })
-        elif db_type == 'postgres':
-            kwargs.update({
-                'host': config['DB_HOST'],
-                'port': config['DB_PORT'],
-                'user': config['DB_USER'],
-                'password': config['DB_PASSWORD'],
-                'database': config['DB_NAME']
-            })
-        elif db_type == 'oracle':
-            args.append('{user}/{password}@{host}:{port}/{dbname}'.format(
-                user=config['DB_USER'],
-                password=config['DB_PASSWORD'],
-                host=config['DB_HOST'],
-                port=config['DB_PORT'],
-                dbname=config['DB_NAME']
-            ))
-
-        return Database(*args, **kwargs)
+    def connect(self, module_with_entities):
+        if self.__facade is None:
+            config = self.__get_app().config
+            facade = DatabaseFacade(module_with_entities, **config['DB'])
+            facade.connect()
+            self.__facade = facade
 
     def init_app(self, app):
-        app.config.setdefault('DB_TYPE', 'sqlite')
-
-        db_type = app.config['DB_TYPE']
-
-        if db_type == 'sqlite':
-            app.config.setdefault('DB_NAME', ':memory:')
-        elif db_type == 'mysql':
-            app.config.setdefault('DB_PORT', 3306)
-        elif db_type == 'postgres':
-            app.config.setdefault('DB_PORT', 5432)
-        elif db_type == 'oracle':
-            app.config.setdefault('DB_PORT', 1521)
-
-        app.config.setdefault('DB_HOST', 'localhost')
-        app.config.setdefault('DB_USER', None)
-        app.config.setdefault('DB_PASSWORD', None)
-        app.config.setdefault('DB_NAME', None)
-        app.config.setdefault('DB_CHARSET', 'utf8')
+        app.config.setdefault('DB', {})
