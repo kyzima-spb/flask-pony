@@ -19,8 +19,8 @@ class Config(object):
     SECRET_KEY = 'Random string'
     DEBUG = False
     TESTING = False
-    DB = {
-        'type': 'sqlite',
+    PONY = {
+        'provider': 'sqlite',
         'dbname': 'shop.sqlite'
     }
     PONY_MODULE_WITH_ENTITIES = 'shop.model'

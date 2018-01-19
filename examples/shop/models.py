@@ -16,10 +16,12 @@
 
 from datetime import datetime
 from decimal import Decimal
-from pony.orm import Database, Required, Optional, Set, PrimaryKey, buffer
+from pony.orm import Required, Optional, Set, PrimaryKey, buffer
+
+from . import pony
 
 
-db = Database()
+db = pony.db
 
 
 class Customer(db.Entity):

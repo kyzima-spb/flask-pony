@@ -19,14 +19,14 @@ from __future__ import print_function
 from flask import current_app
 from pony_database_facade import DatabaseFacade
 
-__version__ = '2.0.0'
+__version__ = '3.0.0'
 
 
 class Pony(object):
     __slots__ = ('__facade', 'app')
 
     def __init__(self, app=None):
-        self.__facade = None
+        self.__facade = DatabaseFacade()
 
         self.app = app
 
@@ -44,15 +44,14 @@ class Pony(object):
 
     @property
     def db(self):
-        if self.__facade is not None:
-            return self.__facade.db
+        return self.__facade.original
 
-    def connect(self, module_with_entities):
-        if self.__facade is None:
-            config = self.__get_app().config
-            facade = DatabaseFacade(module_with_entities, **config['DB'])
-            facade.connect()
-            self.__facade = facade
+    def connect(self):
+        config = self.__get_app().config
+
+        facade = self.__facade
+        facade.bind(**config['PONY'])
+        facade.connect()
 
     def init_app(self, app):
-        app.config.setdefault('DB', {})
+        app.config.setdefault('PONY', {})

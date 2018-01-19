@@ -28,4 +28,4 @@ CSRFProtect(app)
 
 from . import models, views
 
-pony.connect(models)
+pony.connect()
