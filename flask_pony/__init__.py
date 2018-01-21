@@ -19,7 +19,7 @@ from __future__ import print_function
 from flask import current_app
 from pony_database_facade import DatabaseFacade
 
-__version__ = '3.0.0'
+__version__ = '3.0.1'
 
 
 class Pony(object):
@@ -54,4 +54,5 @@ class Pony(object):
         facade.connect()
 
     def init_app(self, app):
+        self.app = app
         app.config.setdefault('PONY', {})

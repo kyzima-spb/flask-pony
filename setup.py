@@ -24,7 +24,7 @@ with open(os.path.join(os.path.dirname(__file__), 'README.rst')) as readme:
 
 setup(
     name='flask-pony',
-    version='3.0.0',
+    version='3.0.1',
     url='https://github.com/kyzima-spb/flask-pony',
     license='Apache-2.0',
     author='Kirill Vercetti',
