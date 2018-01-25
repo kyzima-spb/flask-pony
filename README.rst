@@ -11,7 +11,11 @@ Installation
 
 ::
 
+    # Install the latest stable version
     pip install flask-pony
+
+    # Install the development version
+    pip install https://github.com/kyzima-spb/flask-pony/archive/dev-master.zip
 
 
 Quick start
