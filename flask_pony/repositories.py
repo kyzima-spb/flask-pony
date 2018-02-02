@@ -17,7 +17,7 @@
 from abc import ABCMeta, abstractmethod
 import pickle
 
-from pony.orm import db_session, ObjectNotFound
+from pony.orm import db_session, ObjectNotFound, flush
 from six import with_metaclass
 
 
@@ -50,28 +50,25 @@ class Repository(with_metaclass(ABCMeta)):
 class PonyRepository(Repository):
     entity_class = None
 
-    @db_session
     def create(self, **attributes):
-        return self.entity_class(**attributes)
+        entity = self.entity_class(**attributes)
+        flush()
+        return entity
 
-    @db_session
     def delete(self, entity):
         assert isinstance(entity, self.entity_class)
         entity.delete()
+        flush()
 
-    @db_session
     def get(self, *pk):
         return self.entity_class.__getitem__(pk)
 
-    @db_session
     def get_all(self):
         return self.entity_class.select()[:]
 
-    @db_session
     def get_one(self, **kwargs):
         return self.entity_class.get(**kwargs)
 
-    @db_session
     def update(self, entity, **attributes):
         assert isinstance(entity, self.entity_class)
 
@@ -79,6 +76,8 @@ class PonyRepository(Repository):
 
         for attr, value in attributes.items():
             setattr(entity, attr, value)
+
+        flush()
 
 
 __all__ = ('Repository', 'PonyRepository')
