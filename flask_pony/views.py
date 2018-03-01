@@ -27,9 +27,14 @@ class FormMixin(object):
     success_endpoint_args = ('id',)
 
     def get_form(self, *args, **kwargs):
+        if self.form_class is None:
+            raise AttributeError('You must assign the value of the attribute "form_class".')
         return self.form_class(*args, **kwargs)
 
     def get_success_url(self, entity):
+        if self.success_endpoint is None:
+            raise AttributeError('You must assign the value of the attribute "success_endpoint".')
+
         kwargs = {}
 
         for attr in self.success_endpoint_args:
@@ -80,7 +85,8 @@ class ShowView(EntityView):
 
 class CreateView(EntityView, FormMixin):
     def _create_entity(self, form):
-        raise NotImplementedError
+        kwargs = form.entity_kwargs
+        return self.get_repository().create(**kwargs)
 
     def get(self):
         return self.render_template(form=self.get_form())
@@ -97,7 +103,8 @@ class CreateView(EntityView, FormMixin):
 
 class UpdateView(EntityView, FormMixin):
     def _update_entity(self, entity, form):
-        raise NotImplementedError
+        kwargs = form.entity_kwargs
+        self.get_repository().update(entity, **kwargs)
 
     def get(self, id):
         entity = self.get_entity_or_abort(id)

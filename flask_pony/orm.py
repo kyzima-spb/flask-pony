@@ -29,10 +29,12 @@ import six
 import wtforms.fields as wtf_fields
 import wtforms.validators as wtf_validators
 
-from pony.orm import Database, Required, Optional, Set, PrimaryKey
+from flask_pony.forms import EntityField
 
 
 class Factory(object):
+    """A simple factory for functions and methods that generate form elements."""
+
     def __init__(self):
         self.__types = {}
 
@@ -47,15 +49,28 @@ class Factory(object):
         return decorator
 
 
-class FormBuilder(object):
-    field_factory = Factory()
+class Form(FlaskForm):
+    """Base class for all HTML forms that work with Pony entities."""
 
-    def __init__(self, entity_class, base_class=None, excludes=None):
+    _attr_names_ = {}
+
+    @property
+    def entity_kwargs(self):
+        data = self.data
+        return {name: data.get(name) for name in self._attr_names_}
+
+
+class FormBuilder(object):
+    field_constructor = Factory()
+
+    def __init__(self, entity_class, base_class=None, excludes=None, skip_pk=True):
         self._fields = OrderedDict()
+        self._buttons = OrderedDict()
 
         self._entity_class = entity_class
         self._base_class = base_class
         self._excludes = set(excludes or [])
+        self._skip_pk = skip_pk
 
     def _field_numeric(self, attr, kwargs):
         miN = attr.kwargs.get('min', attr.kwargs.get('unsigned') and 0)
@@ -69,10 +84,25 @@ class FormBuilder(object):
         if max_len:
             kwargs['validators'].append(wtf_validators.Length(max=max_len))
 
+    def _get_field_method(self, tp):
+        """Returns a reference to the form element's constructor method."""
+        method = self.field_constructor.get(tp)
+        if method and hasattr(self, method.__name__):
+            return getattr(self, method.__name__)
+        return method
+
     def add(self, attr, field_class=None, **options):
-        print(attr.py_type, attr.name)
+        """Adds an element to the form based on the entity attribute."""
+        # print(attr.name, attr.py_type, getattr(attr, 'set', None))
+        # print(dir(attr))
+        # print(attr, attr.is_relation)
+        # print(attr.is_pk, attr.auto, attr.is_unique, attr.is_part_of_unique_index, attr.composite_keys)
+
         def field_user_defined(attr, kwargs):
             return field_class, kwargs
+
+        if attr.is_pk and (attr.auto or self._skip_pk):
+            return self
 
         kwargs = {
             'label': attr.name,
@@ -82,9 +112,12 @@ class FormBuilder(object):
             ],
         }
 
-        method = self.field_factory.get(attr.py_type) or field_user_defined
+        if attr.is_relation:
+            method = self.field_relation
+        else:
+            method = self._get_field_method(attr.py_type) or field_user_defined
 
-        klass, kwargs = method(self, attr, kwargs) if hasattr(self, method.__name__) else method(attr, kwargs)
+        klass, kwargs = method(attr, kwargs)
 
         if klass:
             kwargs['validators'] += options.pop('validators', [])
@@ -93,69 +126,72 @@ class FormBuilder(object):
 
         return self
 
+    def add_button(self, name, button_class=wtf_fields.SubmitField, **options):
+        """Adds a button to the form."""
+        self._buttons[name] = button_class(**options)
+
     def build_form(self):
         for attr in self._entity_class._attrs_:
             if attr.name not in self._excludes:
                 self.add(attr)
+        self.add_button('submit')
 
     def get_form(self):
         self.build_form()
         classname = '{}Form'.format(self._entity_class.__class__.__name__)
-        base = self._base_class or FlaskForm
-        return type(classname, (base,), self._fields)
+        base = self._base_class or Form
+        props = OrderedDict()
+        props.update(self._fields)
+        props.update(self._buttons)
+        form = type(classname, (base,), props)
+        form._attr_names_ = self._fields.keys()
+        return form
 
-    @field_factory(bool)
+    @field_constructor(bool)
     def field_bool(self, attr, kwargs):
         return wtf_fields.BooleanField, kwargs
 
-    @field_factory(int)
+    @field_constructor(int)
     def field_int(self, attr, kwargs):
-        # print(dir(attr))
-        # print(attr.is_pk, attr.auto, attr.is_part_of_unique_index, attr.composite_keys, attr.is_unique)
-
-        if attr.is_pk:
-            field_class = wtf_fields.HiddenField
-        else:
-            field_class = wtf_fields.IntegerField
-
         self._field_numeric(attr, kwargs)
-        return field_class, kwargs
+        return wtf_fields.IntegerField, kwargs
 
-    @field_factory(float)
+    @field_constructor(float)
     def field_float(self, attr, kwargs):
         self._field_numeric(attr, kwargs)
         return wtf_fields.FloatField, kwargs
 
-    @field_factory(ormtypes.Decimal)
+    @field_constructor(ormtypes.Decimal)
     def field_decimal(self, attr, kwargs):
         self._field_numeric(attr, kwargs)
         kwargs.setdefault('places', None)
         return wtf_fields.DecimalField, kwargs
 
-    @field_factory(str, six.text_type)
+    @field_constructor(str, six.text_type)
     def field_string(self, attr, kwargs):
         self._field_string(attr, kwargs)
         return wtf_fields.StringField, kwargs
 
-    @field_factory(ormtypes.LongStr, ormtypes.LongUnicode)
+    @field_constructor(ormtypes.LongStr, ormtypes.LongUnicode)
     def field_textarea(self, attr, kwargs):
         self._field_string(attr, kwargs)
         return wtf_fields.TextAreaField, kwargs
 
-    @field_factory(date)
+    @field_constructor(date)
     def field_date(self, attr, kwargs):
         return wtf_fields.DateField, kwargs
 
-    @field_factory(datetime)
+    @field_constructor(datetime)
     def field_datetime(self, attr, kwargs):
         return wtf_fields.DateTimeField, kwargs
 
-    @field_factory(ormtypes.Json)
+    @field_constructor(ormtypes.Json)
     def field_json(self, attr, kwargs):
         return wtf_fields.TextAreaField, kwargs
 
-    def field_pk(self, attr, kwargs):
-        pass
+    def field_relation(self, attr, kwargs):
+        kwargs['entity_class'] = attr.py_type
+        return EntityField, kwargs
 
     @classmethod
     def get_instance(cls, entity_class, *args, **kwargs):

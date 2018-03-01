@@ -22,6 +22,11 @@ from six import with_metaclass
 
 
 class Repository(with_metaclass(ABCMeta)):
+    """
+    Abstract repository, implementation of the design template Repository.
+    https://martinfowler.com/eaaCatalog/repository.html
+    """
+
     @abstractmethod
     def create(self, **attributes):
         pass
