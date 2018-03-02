@@ -14,46 +14,81 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import re
-
 from flask import render_template, request, abort, redirect, url_for
 from flask.views import MethodView
 from pony.orm import db_session, ObjectNotFound
 
+from .orm import FormBuilder
+from .utils import get_route_param_names, camelcase2list
+
 
 class FormMixin(object):
+    """Mixin to work with HTML-forms."""
+
     form_class = None
     success_endpoint = None
-    success_endpoint_args = ('id',)
 
-    def get_form(self, *args, **kwargs):
+    def get_form_class(self):
+        """Returns a reference to the base class of the form."""
         if self.form_class is None:
             raise AttributeError('You must assign the value of the attribute "form_class".')
-        return self.form_class(*args, **kwargs)
+        return self.form_class
 
-    def get_success_url(self, entity):
+    def get_form(self, *args, **kwargs):
+        """
+        Returns an instance of the form class.
+        https://wtforms.readthedocs.io/en/stable/forms.html#the-form-class
+        """
+        return self.get_form_class()(*args, **kwargs)
+
+    def get_success_url(self, obj=None):
+        """
+        Returns the URL to which to go if the form was processed successfully.
+
+        Args:
+            obj (object): The object whose property values are used to build the URL.
+        """
         if self.success_endpoint is None:
             raise AttributeError('You must assign the value of the attribute "success_endpoint".')
 
-        kwargs = {}
-
-        for attr in self.success_endpoint_args:
-            kwargs[attr] = getattr(entity, attr)
+        if obj:
+            kwargs = {p: getattr(obj, p) for p in get_route_param_names(self.success_endpoint)}
+        else:
+            kwargs = {}
 
         return url_for(self.success_endpoint, **kwargs)
 
 
-class EntityView(MethodView):
-    camel_patern = re.compile(r'([A-Z][a-z]+)')
+class EntityMixin(object):
+    """Mixin to work with Pony entities."""
+
     repository_class = None
 
+    def get_repository_class(self):
+        """Returns a reference to the class of the repository."""
+        if self.repository_class is None:
+            raise AttributeError('You must assign the value of the attribute "repository_class".')
+        return self.repository_class
+
+    def get_repository(self, *args, **kwargs):
+        """Returns an instance of the repository class."""
+        return self.get_repository_class()(*args, **kwargs)
+
+    def get_entity_or_abort(self, *pk):
+        try:
+            return self.get_repository().get(*pk)
+        except ObjectNotFound:
+            abort(404)
+
+
+class BaseView(MethodView):
     def __init__(self, template_name=None):
         self.__template_name = template_name
 
     @property
     def template_name(self):
         if self.__template_name is None:
-            name = self.camel_patern.findall(self.__class__.__name__)
+            name = camelcase2list(self.__class__.__name__)
             name = '{}/{}.html'.format(name.pop(0), '_'.join(name))
             self.__template_name = name.lower()
         return self.__template_name
@@ -61,14 +96,28 @@ class EntityView(MethodView):
     def render_template(self, **context):
         return render_template(self.template_name, **context)
 
-    def get_repository(self):
-        return self.repository_class()
 
-    def get_entity_or_abort(self, *pk):
-        try:
-            return self.get_repository().get(*pk)
-        except ObjectNotFound:
-            abort(404)
+class EntityView(BaseView, EntityMixin):
+    pass
+
+
+class ProcessFormView(EntityView, FormMixin):
+    form_class = FormBuilder
+
+    def get_form_class(self):
+        if issubclass(self.form_class, FormBuilder):
+            self.form_class = self.form_class.get_instance(self.get_repository().get_entity_class())
+        return super(ProcessFormView, self).get_form_class()
+
+    def process_form(self, form):
+        """"""
+        raise NotImplementedError
+
+    def form_valid(selfself, form, entity):
+        """Runs if the form is processed successfully."""
+
+    def form_invalid(self, form, entity):
+        """Runs if errors occurred while processing the form."""
 
 
 class ListView(EntityView):
@@ -79,11 +128,11 @@ class ListView(EntityView):
 
 class ShowView(EntityView):
     def get(self, id):
-        task = self.get_entity_or_abort(id)
-        return self.render_template(entity=task)
+        entity = self.get_entity_or_abort(id)
+        return self.render_template(entity=entity)
 
 
-class CreateView(EntityView, FormMixin):
+class CreateView(ProcessFormView):
     def _create_entity(self, form):
         kwargs = form.entity_kwargs
         return self.get_repository().create(**kwargs)
@@ -101,7 +150,7 @@ class CreateView(EntityView, FormMixin):
         return self.render_template(form=form)
 
 
-class UpdateView(EntityView, FormMixin):
+class UpdateView(ProcessFormView):
     def _update_entity(self, entity, form):
         kwargs = form.entity_kwargs
         self.get_repository().update(entity, **kwargs)
@@ -122,8 +171,11 @@ class UpdateView(EntityView, FormMixin):
         return self.render_template(form=form, entity=entity)
 
 
-class DeleteView(EntityView):
-    pass
+class DeleteView(ProcessFormView):
+    def post(self, id):
+        entity = self.get_entity_or_abort(id)
+        entity.delete()
+        return redirect(self.get_success_url())
 
 
 __all__ = (

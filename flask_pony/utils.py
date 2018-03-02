@@ -13,3 +13,27 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+
+import re
+
+from flask import current_app
+
+
+__all__ = (
+    'camelcase2list', 'get_route_param_names'
+)
+
+
+def camelcase2list(s, lower=False):
+    """Converts a camelcase string to a list."""
+    s = re.findall(r'([A-Z][a-z0-9]+)', s)
+    return [w.lower() for w in s] if lower else s
+
+
+def get_route_param_names(endpoint):
+    """Returns parameter names from the route."""
+    try:
+        g = current_app.url_map.iter_rules(endpoint)
+        return next(g).arguments
+    except KeyError:
+        return {}

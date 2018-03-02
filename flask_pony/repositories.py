@@ -55,6 +55,11 @@ class Repository(with_metaclass(ABCMeta)):
 class PonyRepository(Repository):
     entity_class = None
 
+    def get_entity_class(self):
+        if self.entity_class is None:
+            raise AttributeError('You must assign the value of the attribute "entity_class".')
+        return self.entity_class
+
     def create(self, **attributes):
         entity = self.entity_class(**attributes)
         flush()

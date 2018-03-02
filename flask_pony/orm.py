@@ -30,6 +30,7 @@ import wtforms.fields as wtf_fields
 import wtforms.validators as wtf_validators
 
 from flask_pony.forms import EntityField
+from .validators import EntityNotExists
 
 
 class Factory(object):
@@ -91,15 +92,40 @@ class FormBuilder(object):
             return getattr(self, method.__name__)
         return method
 
+    def _create_collection_field(self, attr, kwargs):
+        """The form element for working with the collection of entities."""
+        return None, kwargs
+
+    def _create_relational_field(self, attr, kwargs):
+        """The form element for working with entity relationships."""
+        kwargs['entity_class'] = attr.py_type
+        kwargs['allow_empty'] = not attr.is_required
+        # kwargs['coerce'] = attr.py_type
+
+        # if attr.is_unique:
+        #     kwargs['validators'].append(EntityNotExists(attr.py_type))
+
+        return EntityField, kwargs
+
+    def _create_plain_field(self, attr, kwargs):
+        def field_user_defined(attr, kwargs):
+            # print(attr, attr.is_relation, attr.is_collection)
+            return None, kwargs
+
+        method = self._get_field_method(attr.py_type) or field_user_defined
+        klass, kwargs = method(attr, kwargs)
+
+        if attr.is_unique:
+            kwargs['validators'].append(EntityNotExists(attr.entity))
+
+        return klass, kwargs
+
     def add(self, attr, field_class=None, **options):
         """Adds an element to the form based on the entity attribute."""
         # print(attr.name, attr.py_type, getattr(attr, 'set', None))
         # print(dir(attr))
-        # print(attr, attr.is_relation)
+        # print(attr, attr.is_relation, attr.is_collection)
         # print(attr.is_pk, attr.auto, attr.is_unique, attr.is_part_of_unique_index, attr.composite_keys)
-
-        def field_user_defined(attr, kwargs):
-            return field_class, kwargs
 
         if attr.is_pk and (attr.auto or self._skip_pk):
             return self
@@ -107,21 +133,24 @@ class FormBuilder(object):
         kwargs = {
             'label': attr.name,
             'default': attr.default,
-            'validators': [
-                wtf_validators.InputRequired() if attr.is_required and not attr.is_pk else wtf_validators.Optional()
-            ],
+            'validators': [],
         }
+        kwargs.update(options)
+
+        # Если коллекция, то никаких предположений делать не нужно - пусть пользователь сам создает нужный элемент
+        if attr.is_collection:
+            klass, kwargs = self._create_collection_field(attr, kwargs)
+            return self
+
+        validator = wtf_validators.InputRequired() if attr.is_required and not attr.is_pk else wtf_validators.Optional()
+        kwargs['validators'].insert(0, validator)
 
         if attr.is_relation:
-            method = self.field_relation
+            klass, kwargs = self._create_relational_field(attr, kwargs)
         else:
-            method = self._get_field_method(attr.py_type) or field_user_defined
-
-        klass, kwargs = method(attr, kwargs)
+            klass, kwargs = self._create_plain_field(attr, kwargs)
 
         if klass:
-            kwargs['validators'] += options.pop('validators', [])
-            kwargs.update(options)
             self._fields[attr.name] = field_class(**kwargs) if field_class else klass(**kwargs)
 
         return self
@@ -188,10 +217,6 @@ class FormBuilder(object):
     @field_constructor(ormtypes.Json)
     def field_json(self, attr, kwargs):
         return wtf_fields.TextAreaField, kwargs
-
-    def field_relation(self, attr, kwargs):
-        kwargs['entity_class'] = attr.py_type
-        return EntityField, kwargs
 
     @classmethod
     def get_instance(cls, entity_class, *args, **kwargs):
