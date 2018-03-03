@@ -73,17 +73,17 @@ class FormBuilder(object):
         self._excludes = set(excludes or [])
         self._skip_pk = skip_pk
 
-    def _field_numeric(self, attr, kwargs):
+    def _field_numeric(self, attr, options):
         miN = attr.kwargs.get('min', attr.kwargs.get('unsigned') and 0)
         maX = attr.kwargs.get('max')
 
-        kwargs['validators'].append(wtf_validators.NumberRange(miN, maX))
+        options['validators'].append(wtf_validators.NumberRange(miN, maX))
 
-    def _field_string(self, attr, kwargs):
+    def _field_string(self, attr, options):
         args = list(attr.args)
         max_len = args.pop() if args else attr.kwargs.get('max_len')
         if max_len:
-            kwargs['validators'].append(wtf_validators.Length(max=max_len))
+            options['validators'].append(wtf_validators.Length(max=max_len))
 
     def _get_field_method(self, tp):
         """Returns a reference to the form element's constructor method."""
@@ -92,33 +92,39 @@ class FormBuilder(object):
             return getattr(self, method.__name__)
         return method
 
-    def _create_collection_field(self, attr, kwargs):
-        """The form element for working with the collection of entities."""
-        return None, kwargs
+    def _create_collection_field(self, attr, options):
+        """Creates the form element for working with the collection of entities."""
+        return None, options
 
-    def _create_relational_field(self, attr, kwargs):
-        """The form element for working with entity relationships."""
-        kwargs['entity_class'] = attr.py_type
-        kwargs['allow_empty'] = not attr.is_required
-        # kwargs['coerce'] = attr.py_type
-
-        # if attr.is_unique:
-        #     kwargs['validators'].append(EntityNotExists(attr.py_type))
-
-        return EntityField, kwargs
-
-    def _create_plain_field(self, attr, kwargs):
-        def field_user_defined(attr, kwargs):
-            # print(attr, attr.is_relation, attr.is_collection)
-            return None, kwargs
-
-        method = self._get_field_method(attr.py_type) or field_user_defined
-        klass, kwargs = method(attr, kwargs)
+    def _create_plain_field(self, attr, options):
+        """Creates the form element."""
+        method = self._get_field_method(attr.py_type) or self._create_other_field
+        klass, options = method(attr, options)
 
         if attr.is_unique:
-            kwargs['validators'].append(EntityNotExists(attr.entity))
+            options['validators'].append(EntityNotExists(attr.entity))
 
-        return klass, kwargs
+        return klass, options
+
+    def _create_pk_field(self, attr, options):
+        """Creates the form element for working with primary key."""
+        if attr.auto or self._skip_pk:
+            return None, options
+
+    def _create_relational_field(self, attr, options):
+        """Creates the form element for working with entity relationships."""
+        options['entity_class'] = attr.py_type
+        options['allow_empty'] = not attr.is_required
+        # options['coerce'] = attr.py_type
+
+        # if attr.is_unique:
+        #     options['validators'].append(EntityNotExists(attr.py_type))
+
+        return EntityField, options
+
+    def _create_other_field(self, attr, options):
+        """Creates a custom form element. Called when the element was not found."""
+        return None, options
 
     def add(self, attr, field_class=None, **options):
         """Adds an element to the form based on the entity attribute."""
@@ -127,7 +133,9 @@ class FormBuilder(object):
         # print(attr, attr.is_relation, attr.is_collection)
         # print(attr.is_pk, attr.auto, attr.is_unique, attr.is_part_of_unique_index, attr.composite_keys)
 
-        if attr.is_pk and (attr.auto or self._skip_pk):
+        def add(klass, options):
+            if klass:
+                self._fields[attr.name] = field_class(**options) if field_class else klass(**options)
             return self
 
         kwargs = {
@@ -137,23 +145,20 @@ class FormBuilder(object):
         }
         kwargs.update(options)
 
+        if attr.is_pk:
+            return add(*self._create_pk_field(attr, kwargs))
+
         # Если коллекция, то никаких предположений делать не нужно - пусть пользователь сам создает нужный элемент
         if attr.is_collection:
-            klass, kwargs = self._create_collection_field(attr, kwargs)
-            return self
+            return add(*self._create_collection_field(attr, kwargs))
 
         validator = wtf_validators.InputRequired() if attr.is_required and not attr.is_pk else wtf_validators.Optional()
         kwargs['validators'].insert(0, validator)
 
         if attr.is_relation:
-            klass, kwargs = self._create_relational_field(attr, kwargs)
-        else:
-            klass, kwargs = self._create_plain_field(attr, kwargs)
+            return add(*self._create_relational_field(attr, kwargs))
 
-        if klass:
-            self._fields[attr.name] = field_class(**kwargs) if field_class else klass(**kwargs)
-
-        return self
+        return add(*self._create_plain_field(attr, kwargs))
 
     def add_button(self, name, button_class=wtf_fields.SubmitField, **options):
         """Adds a button to the form."""
@@ -177,46 +182,46 @@ class FormBuilder(object):
         return form
 
     @field_constructor(bool)
-    def field_bool(self, attr, kwargs):
-        return wtf_fields.BooleanField, kwargs
+    def field_bool(self, attr, options):
+        return wtf_fields.BooleanField, options
 
     @field_constructor(int)
-    def field_int(self, attr, kwargs):
-        self._field_numeric(attr, kwargs)
-        return wtf_fields.IntegerField, kwargs
+    def field_int(self, attr, options):
+        self._field_numeric(attr, options)
+        return wtf_fields.IntegerField, options
 
     @field_constructor(float)
-    def field_float(self, attr, kwargs):
-        self._field_numeric(attr, kwargs)
-        return wtf_fields.FloatField, kwargs
+    def field_float(self, attr, options):
+        self._field_numeric(attr, options)
+        return wtf_fields.FloatField, options
 
     @field_constructor(ormtypes.Decimal)
-    def field_decimal(self, attr, kwargs):
-        self._field_numeric(attr, kwargs)
-        kwargs.setdefault('places', None)
-        return wtf_fields.DecimalField, kwargs
+    def field_decimal(self, attr, options):
+        self._field_numeric(attr, options)
+        options.setdefault('places', None)
+        return wtf_fields.DecimalField, options
 
     @field_constructor(str, six.text_type)
-    def field_string(self, attr, kwargs):
-        self._field_string(attr, kwargs)
-        return wtf_fields.StringField, kwargs
+    def field_string(self, attr, options):
+        self._field_string(attr, options)
+        return wtf_fields.StringField, options
 
     @field_constructor(ormtypes.LongStr, ormtypes.LongUnicode)
-    def field_textarea(self, attr, kwargs):
-        self._field_string(attr, kwargs)
-        return wtf_fields.TextAreaField, kwargs
+    def field_textarea(self, attr, options):
+        self._field_string(attr, options)
+        return wtf_fields.TextAreaField, options
 
     @field_constructor(date)
-    def field_date(self, attr, kwargs):
-        return wtf_fields.DateField, kwargs
+    def field_date(self, attr, options):
+        return wtf_fields.DateField, options
 
     @field_constructor(datetime)
-    def field_datetime(self, attr, kwargs):
-        return wtf_fields.DateTimeField, kwargs
+    def field_datetime(self, attr, options):
+        return wtf_fields.DateTimeField, options
 
     @field_constructor(ormtypes.Json)
-    def field_json(self, attr, kwargs):
-        return wtf_fields.TextAreaField, kwargs
+    def field_json(self, attr, options):
+        return wtf_fields.TextAreaField, options
 
     @classmethod
     def get_instance(cls, entity_class, *args, **kwargs):
