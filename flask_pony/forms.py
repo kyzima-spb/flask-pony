@@ -14,9 +14,11 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+from pony.orm import ObjectNotFound
 from wtforms import SelectMultipleField, SelectFieldBase
 from wtforms import widgets
 from wtforms.compat import text_type
+from wtforms.validators import ValidationError
 
 
 __all__ = (
@@ -25,11 +27,16 @@ __all__ = (
 
 
 class EntityField(SelectFieldBase):
+    # __slots__ = ('__pk', '__entity')
+
     PK_SEPARATOR = ';'
 
     widget = widgets.Select()
 
     def __init__(self, entity_class, label=None, allow_empty=False, empty_text='', **kwargs):
+        self.__pk = None
+        self.__entity = None
+
         super().__init__(label, **kwargs)
         self.entity_class = entity_class
         self.allow_empty = allow_empty
@@ -39,10 +46,45 @@ class EntityField(SelectFieldBase):
         pk = (text_type(getattr(entity, attr.name)) for attr in entity._pk_attrs_)
         return self.PK_SEPARATOR.join(pk)
 
-    def str2pk(self, s):
+    # def str2pk(self, s):
+    #     attrs = self.entity_class._pk_attrs_
+    #     values = s.split(self.PK_SEPARATOR)
+    #     return tuple(attr.py_type(value) for attr, value in zip(attrs, values))
+
+    @property
+    def data(self):
+        if self.__entity:
+            return self.__entity
+
+        if not self.pk:
+            return None
+
+        try:
+            self.__entity = self.entity_class.__getitem__(self.pk)
+            return self.__entity
+        except ObjectNotFound:
+            return None
+
+    @data.setter
+    def data(self, entity):
+        if isinstance(entity, self.entity_class):
+            self.__entity = entity
+
+    @property
+    def pk(self):
+        return self.__pk
+
+    @pk.setter
+    def pk(self, value):
+        if not isinstance(value, text_type):
+            self.__pk = value
+            return
+
         attrs = self.entity_class._pk_attrs_
-        values = s.split(self.PK_SEPARATOR)
-        return tuple(attr.py_type(value) for attr, value in zip(attrs, values))
+        value = value.split(self.PK_SEPARATOR)
+
+        if len(value) == len(attrs):
+            self.__pk = tuple(attr.py_type(value) for attr, value in zip(attrs, value))
 
     def iter_choices(self):
         if self.allow_empty:
@@ -53,9 +95,8 @@ class EntityField(SelectFieldBase):
 
     def process_formdata(self, valuelist):
         if valuelist:
-            pk = self.str2pk(valuelist[0])
-            self.data = self.entity_class.__getitem__(pk)
+            self.pk = valuelist[0]
 
-    # def pre_validate(self, form):
-    #     print('Pre validate')
-    #     super().pre_validate(form)
+    def pre_validate(self, form):
+        if self.data is None and (self.pk or not self.allow_empty):
+            raise ValidationError('Not a valid choice')
