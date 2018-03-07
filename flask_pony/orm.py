@@ -29,8 +29,8 @@ import six
 import wtforms.fields as wtf_fields
 import wtforms.validators as wtf_validators
 
-from flask_pony.forms import EntityField
-from .validators import EntityNotExists
+from .forms import EntityField
+from .validators import UniqueEntityValidator
 
 
 class Factory(object):
@@ -102,7 +102,7 @@ class FormBuilder(object):
         klass, options = method(attr, options)
 
         if attr.is_unique:
-            options['validators'].append(EntityNotExists(attr.entity))
+            options['validators'].append(UniqueEntityValidator(attr.entity))
 
         return klass, options
 
@@ -115,11 +115,6 @@ class FormBuilder(object):
         """Creates the form element for working with entity relationships."""
         options['entity_class'] = attr.py_type
         options['allow_empty'] = not attr.is_required
-        # options['coerce'] = attr.py_type
-
-        # if attr.is_unique:
-        #     options['validators'].append(EntityNotExists(attr.py_type))
-
         return EntityField, options
 
     def _create_other_field(self, attr, options):

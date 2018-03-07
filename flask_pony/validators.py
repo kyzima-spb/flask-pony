@@ -17,6 +17,9 @@
 from wtforms.validators import StopValidation
 
 
+__all__ = ('UniqueEntityValidator',)
+
+
 class Validator(object):
     def __init__(self, message=None):
         self.message = message
@@ -35,26 +38,12 @@ class EntityValidator(Validator):
         raise RuntimeError('You must set the entity class')
 
 
-# class EntityExists(EntityValidator):
-#     def __call__(self, form, field):
-#         Entity = self.entity_class
-#         kwargs = {
-#             Entity._pk_attrs_[0].name: field.data
-#         }
-#
-#         if not self.entity_class.exists(**kwargs):
-#             msg = self.message or 'Entity not exists'
-#             raise StopValidation(msg)
-
-
-class EntityNotExists(EntityValidator):
+class UniqueEntityValidator(EntityValidator):
     def __call__(self, form, field):
         kwargs = {
             field.name: field.data
         }
 
-        print(self.entity_class, kwargs)
-
         if self.entity_class.exists(**kwargs):
-            msg = self.message or 'Entity exists'
+            msg = self.message or 'This value is already used.'
             raise StopValidation(msg)
