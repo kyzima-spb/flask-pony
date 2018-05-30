@@ -37,3 +37,20 @@ def get_route_param_names(endpoint):
         return next(g).arguments
     except KeyError:
         return {}
+
+
+def camel_to_snake(name):
+    result = []
+
+    for i, c in enumerate(name):
+        if c.isupper() and i:
+            result.append(name[:i])
+            name = name[i:]
+
+    result.append(name)
+
+    return '_'.join(result).lower()
+
+
+def snake_to_camel(name):
+    return ''.join(name.title().split('_'))
