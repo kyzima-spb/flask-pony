@@ -40,6 +40,12 @@ class EntityValidator(Validator):
 
 class UniqueEntityValidator(EntityValidator):
     def __call__(self, form, field):
+        original_entity = form.original_entity
+
+        if original_entity:
+            if getattr(original_entity, field.name, None) == field.data:
+                return True
+
         kwargs = {
             field.name: field.data
         }
