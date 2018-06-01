@@ -75,38 +75,47 @@ class EntityField(SelectFieldBase):
 
     @property
     def data(self):
-        if self.__entity:
-            return self.__entity
+        return self.__entity
 
-        if not self.pk:
-            return None
+    @data.setter
+    def data(self, entity_or_pk):
+        if isinstance(entity_or_pk, self.entity_class):
+            self.__entity = entity_or_pk
+            return
+
+        self.pk = entity_or_pk
 
         try:
             self.__entity = self.entity_class.__getitem__(self.pk)
-            return self.__entity
         except ObjectNotFound:
-            return None
-
-    @data.setter
-    def data(self, entity):
-        if isinstance(entity, self.entity_class):
-            self.__entity = entity
+            del self.pk
 
     @property
     def pk(self):
+        if self.__pk is None:
+            entity = self.__entity
+            if entity:
+                pk = tuple(getattr(entity, attr.name) for attr in self.entity_class._pk_attrs_)
+                self.__pk = pk[0] if len(pk) == 1 else pk
         return self.__pk
 
     @pk.setter
     def pk(self, value):
-        if not isinstance(value, text_type):
-            self.__pk = value
-            return
+        if isinstance(value, text_type):
+            value = value.split(self.PK_SEPARATOR)
+        elif not isinstance(value, (tuple, list)):
+            value = (value,)
 
         attrs = self.entity_class._pk_attrs_
-        value = value.split(self.PK_SEPARATOR)
 
-        if len(value) == len(attrs):
-            self.__pk = tuple(attr.py_type(value) for attr, value in zip(attrs, value))
+        if len(value) != len(attrs):
+            raise ValidationError('Not a valid choice')
+
+        self.__pk = tuple(attr.py_type(value) for attr, value in zip(attrs, value))
+
+    @pk.deleter
+    def pk(self):
+        self.__pk = None
 
     def iter_choices(self):
         if self.allow_empty:
@@ -117,7 +126,7 @@ class EntityField(SelectFieldBase):
 
     def process_formdata(self, valuelist):
         if valuelist:
-            self.pk = valuelist[0]
+            self.data = valuelist[0]
 
     def pre_validate(self, form):
         if self.data is None and (self.pk or not self.allow_empty):
