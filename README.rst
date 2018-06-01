@@ -1,5 +1,5 @@
-Pony Database Facade
-====================
+Flask-Pony
+==========
 
 |PyPI| |LICENCE| |STARS|
 
