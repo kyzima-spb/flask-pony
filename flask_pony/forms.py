@@ -14,7 +14,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+from flask_wtf import FlaskForm
 from pony.orm import ObjectNotFound
+from pony.orm.core import Entity
 from wtforms import SelectMultipleField, SelectFieldBase
 from wtforms import widgets
 from wtforms.compat import text_type
@@ -22,8 +24,28 @@ from wtforms.validators import ValidationError
 
 
 __all__ = (
-    'EntityField',
+    'Form', 'EntityField',
 )
+
+
+class Form(FlaskForm):
+    """Base class for all HTML forms that work with Pony entities."""
+
+    _attr_names_ = {}
+
+    def __init__(self, *args, **kwargs):
+        super(Form, self).__init__(*args, **kwargs)
+        entity = kwargs.get('obj')
+        self._original_entity = entity if isinstance(entity, Entity) else None
+
+    @property
+    def original_entity(self):
+        return self._original_entity
+
+    @property
+    def entity_kwargs(self):
+        data = self.data
+        return {name: data.get(name) for name in self._attr_names_}
 
 
 class EntityField(SelectFieldBase):

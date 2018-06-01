@@ -1,6 +1,6 @@
-"""
-coding: utf-8
+# coding: utf-8
 
+"""
 bool        - BooleanField
 int         - IntegerField
 float       - FloatField
@@ -23,13 +23,12 @@ UUID        -
 from collections import OrderedDict
 from datetime import date, datetime, time
 
-from flask_wtf import FlaskForm
 from pony.orm import ormtypes
 import six
 import wtforms.fields as wtf_fields
 import wtforms.validators as wtf_validators
 
-from .forms import EntityField
+from .forms import Form, EntityField
 from .validators import UniqueEntityValidator
 
 
@@ -48,17 +47,6 @@ class Factory(object):
                 self.__types[tp] = func
             return func
         return decorator
-
-
-class Form(FlaskForm):
-    """Base class for all HTML forms that work with Pony entities."""
-
-    _attr_names_ = {}
-
-    @property
-    def entity_kwargs(self):
-        data = self.data
-        return {name: data.get(name) for name in self._attr_names_}
 
 
 class FormBuilder(object):
