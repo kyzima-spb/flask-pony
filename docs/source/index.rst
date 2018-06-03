@@ -8,17 +8,99 @@
 
 Flask-Pony - это расширение к популярному микрофреймворку `Flask <http://flask.pocoo.org>`_, которое позволяет использовать `PonyORM <https://ponyorm.com>`_ совместно с ним.
 
+Быстрый старт
+=============
+
+Установка
+---------
+
+.. code-block:: shell
+
+    # Установить последнюю стабильную версию
+    pip install flask-pony
+
+    # Установить версию в разработке (возможны баги, но она самая свежая)
+    pip install https://github.com/kyzima-spb/flask-pony/archive/dev-master.zip
+
+
+Настройка
+---------
+
+Flask-Pony использует библиотеку `pony-database-facade <https://github.com/kyzima-spb/pony-database-facade>`_,
+которая позволяет инкапсулировать имена параметров, используемых в низкоуровневых модулях.
+В конфигурационном файле вам доступна одна опция ``PONY`` - это словарь настроек.
+Это отличается от традиционного подхода, когда каждая настройка задачается отдельно.
+Мне кажется использовать словарь удобнее, но если у вас есть весомые доводы в пользу традициооного подхода, напишите мне на почту или GitHub.
+
+Пример конфигурационного файла ``settings.py`` с использованием классов:
+
+.. code-block:: python
+
+    # settings.py
+
+    class Config(object):
+        PONY = {
+            'provider': 'sqlite',
+            'dbname': 'estore.sqlite'
+        }
+
+
+Инициализация и подключение
+---------------------------
+
+.. code-block:: python
+
+    # __init__.py
+
+    from flask import Flask
+    from flask_pony import Pony
+
+
+    # Создаем объект приложения и загружаем настройки
+    app = Flask(__name__)
+    app.config.from_object('settings.Config')
+
+    # Создаем экземпляр расширения
+    pony = Pony(app)
+
+    # Импортируем модуль с сущностями Pony
+    from . import models
+
+    # Устанавливаем соединение
+    pony.connect()
+
+В момент вызова метод ``connect()`` произойдет вызов методов ``bind`` и ``generate_mapping``.
+
+
+Создание сущностей
+------------------
+
+Например, наши сущности будут описаны в модуле ``models.py``:
+
+.. code-block:: python
+
+    # models.py
+
+    from pony.orm import Required, Optional, Set
+
+    # из модуля __init__.py импортируем экземпляр Flask-Pony
+    from . import pony
+
+
+    # Получаем ссылку на базовый класс сущностей Pony.
+    db = pony.db
+
+
+    class Category(db.Entity):
+        title = Required(str, unique=True)
+        parent = Optional('Category', reverse='children')
+        children = Set('Category', reverse='parent')
+
+        def __str__(self):
+            return self.title
+
+
+
 .. toctree::
    :maxdepth: 2
    :caption: Contents:
-
-   quick_start
-
-
-
-Indices and tables
-==================
-
-* :ref:`genindex`
-* :ref:`modindex`
-* :ref:`search`
