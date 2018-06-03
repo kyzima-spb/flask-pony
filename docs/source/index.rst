@@ -6,7 +6,9 @@
 Что такое Flask-Pony?
 =====================
 
-Flask-Pony - это расширение к популярному микрофреймворку `Flask <http://flask.pocoo.org>`_, которое позволяет использовать `PonyORM <https://ponyorm.com>`_ совместно с ним.
+|PyPI| |LICENCE| |STARS|
+
+Flask-Pony - это расширение к популярному микрофреймворку Flask_, которое позволяет использовать PonyORM_ совместно с ним.
 
 Быстрый старт
 =============
@@ -26,7 +28,7 @@ Flask-Pony - это расширение к популярному микроф�
 Настройка
 ---------
 
-Flask-Pony использует библиотеку `pony-database-facade <https://github.com/kyzima-spb/pony-database-facade>`_,
+Flask-Pony использует библиотеку `pony-database-facade`_,
 которая позволяет инкапсулировать имена параметров, используемых в низкоуровневых модулях.
 В конфигурационном файле вам доступна одна опция ``PONY`` - это словарь настроек.
 Это отличается от традиционного подхода, когда каждая настройка задачается отдельно.
@@ -104,3 +106,19 @@ Flask-Pony использует библиотеку `pony-database-facade <http
 .. toctree::
    :maxdepth: 2
    :caption: Contents:
+
+
+.. |PyPI| image:: https://img.shields.io/pypi/v/flask-pony.svg
+   :target: https://pypi.python.org/pypi/flask-pony/
+   :alt: Latest Version
+
+.. |LICENCE| image:: https://img.shields.io/github/license/kyzima-spb/flask-pony.svg
+   :target: https://github.com/kyzima-spb/flask-pony/blob/master/LICENSE
+   :alt: Apache 2.0
+
+.. |STARS| image:: https://img.shields.io/github/stars/kyzima-spb/flask-pony.svg
+   :target: https://github.com/kyzima-spb/flask-pony/stargazers
+
+.. _PonyORM: https://ponyorm.com
+.. _Flask: http://flask.pocoo.org
+.. _pony-database-facade: https://github.com/kyzima-spb/pony-database-facade

@@ -6,69 +6,13 @@ Flask-Pony
 PonyORM for your Flask application.
 
 
-Installation
-------------
+Documentation
+-------------
 
-::
+Read the Russian documentation `here <https://flask-pony.readthedocs.io/ru/latest>`_.
 
-    # Install the latest stable version
-    pip install flask-pony
-
-    # Install the development version
-    pip install https://github.com/kyzima-spb/flask-pony/archive/dev-master.zip
-
-
-Quick start
------------
-
-Read the documentation for the `pony-database-facade`_ package.
-
-.. code:: python
-
-    # app.py
-
-    from flask import Flask
-
-    from flask_pony import Pony
-
-
-    app = Flask(__name__)
-    app.config.from_object('configmodule.Config')
-
-    pony = Pony(app)
-
-    from . import models
-
-    pony.connect()
-
-
-.. code:: python
-
-    # models.py
-
-    from pony.orm import Required
-
-    from . import pony
-
-
-    db = pony.db
-
-
-    class Person(db.Entity):
-        username = Required(str, 50)
-
-
-.. code:: python
-
-    # configmodule.py
-
-    class Config(object):
-        PONY = {
-            'provider': 'mysql',
-            'user': 'anyone',
-            'password': 'anykey',
-            'dbname': 'blog'
-        }
+    **Note**.
+    My English is very bad, so the documentation is in Russian =) If my package is really useful to someone, then I will be happy for any help with the translation.
 
 
 .. |PyPI| image:: https://img.shields.io/pypi/v/flask-pony.svg
@@ -81,6 +25,3 @@ Read the documentation for the `pony-database-facade`_ package.
 
 .. |STARS| image:: https://img.shields.io/github/stars/kyzima-spb/flask-pony.svg
    :target: https://github.com/kyzima-spb/flask-pony/stargazers
-
-.. _Русская документация: docs/RU.rst
-.. _pony-database-facade: https://github.com/kyzima-spb/pony-database-facade
