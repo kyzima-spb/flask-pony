@@ -79,6 +79,10 @@ class EntityField(SelectFieldBase):
 
     @data.setter
     def data(self, entity_or_pk):
+        if entity_or_pk is None or entity_or_pk == '':
+            del self.data
+            return
+
         if isinstance(entity_or_pk, self.entity_class):
             self.__entity = entity_or_pk
             return
@@ -89,6 +93,11 @@ class EntityField(SelectFieldBase):
             self.__entity = self.entity_class.__getitem__(self.pk)
         except ObjectNotFound:
             del self.pk
+
+    @data.deleter
+    def data(self):
+        self.__entity = None
+        del self.pk
 
     @property
     def pk(self):
