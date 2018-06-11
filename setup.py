@@ -37,7 +37,8 @@ setup(
     platforms='any',
     install_requires=[
         'flask',
-        'pony-database-facade'
+        'pony-database-facade',
+        'flask-wtf'
     ],
     classifiers=[
         "Development Status :: 4 - Beta",
