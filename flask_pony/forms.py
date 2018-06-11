@@ -59,7 +59,7 @@ class EntityField(SelectFieldBase):
         self.__pk = None
         self.__entity = None
 
-        super().__init__(label, **kwargs)
+        super(EntityField, self).__init__(label, **kwargs)
         self.entity_class = entity_class
         self.allow_empty = allow_empty
         self.empty_text = empty_text

@@ -21,6 +21,8 @@ from pony.orm import db_session
 from pony.orm.core import local
 from pony_database_facade import DatabaseFacade
 
+from .compat import get_exc_info
+
 __version__ = '3.0.1'
 
 
@@ -51,7 +53,7 @@ def stop_db_session(exc=None):
         tb = None
 
         if exc:
-            exc_type, tb = type(exc), exc.__traceback__
+            exc_type, exc, tb = get_exc_info(exc)
 
         db_session.__exit__(exc_type, exc, tb)
 

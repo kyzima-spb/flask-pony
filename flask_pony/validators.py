@@ -28,7 +28,7 @@ class Validator(object):
 
 class EntityValidator(Validator):
     def __init__(self, entity_class, message=None):
-        super().__init__(message)
+        super(EntityValidator, self).__init__(message)
         self.__entity_class = entity_class
 
     @property
