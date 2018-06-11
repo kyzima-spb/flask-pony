@@ -1,23 +1,13 @@
 # coding: utf-8
 
 """
-bool        - BooleanField
-int         - IntegerField
-float       - FloatField
-Decimal     - DecimalField
-str         - StringField
-unicode     - StringField
-LongStr     - TextAreaField
-LongUnicode - TextAreaField
 date        - DateField
 datetime    - DateTimeField
-Json        - TextAreaField
 
 time        - нет
 timedelta   - нет
 buffer      - ? - used for binary data in Python 2 and 3
 bytes       - ? - used for binary data in Python 3
-UUID        -
 """
 
 from collections import OrderedDict
@@ -29,7 +19,7 @@ import wtforms.fields as wtf_fields
 import wtforms.validators as wtf_validators
 
 from .forms import Form, EntityField
-from .validators import UniqueEntityValidator
+from . import validators
 
 
 class Factory(object):
@@ -90,7 +80,7 @@ class FormBuilder(object):
         klass, options = method(attr, options)
 
         if attr.is_unique:
-            options['validators'].append(UniqueEntityValidator(attr.entity))
+            options['validators'].append(validators.UniqueEntityValidator(attr.entity))
 
         return klass, options
 
@@ -131,7 +121,6 @@ class FormBuilder(object):
         if attr.is_pk:
             return add(*self._create_pk_field(attr, kwargs))
 
-        # Если коллекция, то никаких предположений делать не нужно - пусть пользователь сам создает нужный элемент
         if attr.is_collection:
             return add(*self._create_collection_field(attr, kwargs))
 
@@ -151,7 +140,6 @@ class FormBuilder(object):
         for attr in self._entity_class._attrs_:
             if attr.name not in self._excludes:
                 self.add(attr)
-        self.add_button('submit')
 
     def get_form(self):
         self.build_form()
@@ -205,6 +193,12 @@ class FormBuilder(object):
     @field_constructor(ormtypes.Json)
     def field_json(self, attr, options):
         return wtf_fields.TextAreaField, options
+
+    @field_constructor(ormtypes.UUID)
+    def field_uuid(self, attr, options):
+        """Creates a form element for the UUID type."""
+        options['validators'].append(validators.UUIDValidator(attr.entity))
+        return wtf_fields.StringField, options
 
     @classmethod
     def get_instance(cls, entity_class, *args, **kwargs):

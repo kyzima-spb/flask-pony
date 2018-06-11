@@ -6,3 +6,5 @@ Flask-Pony
    :caption: Contents:
 
    index
+   views
+   forms

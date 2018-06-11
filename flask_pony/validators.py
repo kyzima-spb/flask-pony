@@ -14,6 +14,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+from pony.orm.ormtypes import UUID
 from wtforms.validators import StopValidation
 
 
@@ -53,3 +54,11 @@ class UniqueEntityValidator(EntityValidator):
         if self.entity_class.exists(**kwargs):
             msg = self.message or 'This value is already used.'
             raise StopValidation(msg)
+
+
+class UUIDValidator(Validator):
+    def __call__(self, form, field):
+        try:
+            UUID(field.data)
+        except (TypeError, ValueError) as e:
+            raise StopValidation(str(e))
