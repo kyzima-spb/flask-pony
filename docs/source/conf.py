@@ -24,9 +24,9 @@ copyright = '2018, Kirill Vercetti'
 author = 'Kirill Vercetti'
 
 # The short X.Y version
-version = ''
+version = '3.1'
 # The full version, including alpha/beta/rc tags
-release = '3.0.0'
+release = '3.1.0'
 
 
 # -- General configuration ---------------------------------------------------
@@ -76,14 +76,30 @@ pygments_style = 'sphinx'
 
 # The theme to use for HTML and HTML Help pages.  See the documentation for
 # a list of builtin themes.
-#
+
 html_theme = 'alabaster'
+html_sidebars = {
+    '**': [
+        'about.html',
+        'navigation.html',
+        'relations.html',
+        'searchbox.html',
+        'donate.html',
+    ]
+}
 
 # Theme options are theme-specific and customize the look and feel of a theme
 # further.  For a list of options available for each theme, see the
 # documentation.
 #
-# html_theme_options = {}
+html_theme_options = {
+    # 'logo': 'logo.png',
+    'github_user': 'kyzima-spb',
+    'github_repo': 'flask-pony',
+    'github_button': False,
+    'extra_nav_links': {
+    }
+}
 
 # Add any paths that contain custom static files (such as style sheets) here,
 # relative to this directory. They are copied after the builtin static files,
@@ -179,5 +195,6 @@ epub_copyright = copyright
 epub_exclude_files = ['search.html']
 
 html_show_sourcelink = False
+
 
 # -- Extension configuration -------------------------------------------------
