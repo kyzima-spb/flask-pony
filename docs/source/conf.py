@@ -12,9 +12,9 @@
 # add these directories to sys.path here. If the directory is relative to the
 # documentation root, use os.path.abspath to make it absolute, like shown here.
 #
-# import os
-# import sys
-# sys.path.insert(0, os.path.abspath('.'))
+import os
+import sys
+sys.path.insert(0, os.path.abspath('../flask_pony'))
 
 
 # -- Project information -----------------------------------------------------
@@ -42,6 +42,7 @@ extensions = [
     'sphinx.ext.autodoc',
     'sphinx.ext.viewcode',
     'sphinx.ext.githubpages',
+    'sphinx.ext.intersphinx'
 ]
 
 # Add any paths that contain templates here, relative to this directory.
@@ -76,8 +77,15 @@ pygments_style = 'sphinx'
 
 # The theme to use for HTML and HTML Help pages.  See the documentation for
 # a list of builtin themes.
-
 html_theme = 'alabaster'
+
+# Custom sidebar templates, must be a dictionary that maps document names
+# to template names.
+#
+# The default sidebars (for documents that don't match any pattern) are
+# defined by theme itself.  Builtin themes are using these templates by
+# default: ``['localtoc.html', 'relations.html', 'sourcelink.html',
+# 'searchbox.html']``.
 html_sidebars = {
     '**': [
         'about.html',
@@ -96,7 +104,9 @@ html_theme_options = {
     # 'logo': 'logo.png',
     'github_user': 'kyzima-spb',
     'github_repo': 'flask-pony',
-    'github_button': False,
+    'github_button': True,
+    'github_type': 'star',
+    'github_banner': True,
     'extra_nav_links': {
     }
 }
@@ -105,17 +115,6 @@ html_theme_options = {
 # relative to this directory. They are copied after the builtin static files,
 # so a file named "default.css" will overwrite the builtin "default.css".
 html_static_path = ['_static']
-
-# Custom sidebar templates, must be a dictionary that maps document names
-# to template names.
-#
-# The default sidebars (for documents that don't match any pattern) are
-# defined by theme itself.  Builtin themes are using these templates by
-# default: ``['localtoc.html', 'relations.html', 'sourcelink.html',
-# 'searchbox.html']``.
-#
-# html_sidebars = {}
-
 
 # -- Options for HTMLHelp output ---------------------------------------------
 
@@ -198,3 +197,9 @@ html_show_sourcelink = False
 
 
 # -- Extension configuration -------------------------------------------------
+
+intersphinx_mapping = {
+    'python': ('https://docs.python.org/3', None),
+    'flask': ('http://flask.pocoo.org/docs/1.0', None),
+    'pony': ('https://docs.ponyorm.com/', None),
+}
