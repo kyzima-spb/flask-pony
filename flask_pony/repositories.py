@@ -17,14 +17,14 @@
 from abc import ABCMeta, abstractmethod
 import pickle
 
-from pony.orm import db_session, ObjectNotFound, flush
+from pony.orm import ObjectNotFound, flush
 from six import with_metaclass
 
 
 class Repository(with_metaclass(ABCMeta)):
     """
-    Abstract repository, implementation of the design template Repository.
-    https://martinfowler.com/eaaCatalog/repository.html
+    Abstract repository, implementation of the design template
+    `Repository <https://martinfowler.com/eaaCatalog/repository.html>`_.
     """
 
     @abstractmethod
@@ -53,6 +53,8 @@ class Repository(with_metaclass(ABCMeta)):
 
 
 class PonyRepository(Repository):
+    """Repository for working with Pony entities."""
+
     entity_class = None
 
     def get_entity_class(self):

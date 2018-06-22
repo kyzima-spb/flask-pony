@@ -40,9 +40,10 @@ release = '3.1.0'
 # ones.
 extensions = [
     'sphinx.ext.autodoc',
+    'sphinx.ext.napoleon',
     'sphinx.ext.viewcode',
     'sphinx.ext.githubpages',
-    'sphinx.ext.intersphinx'
+    'sphinx.ext.intersphinx',
 ]
 
 # Add any paths that contain templates here, relative to this directory.
@@ -201,5 +202,6 @@ html_show_sourcelink = False
 intersphinx_mapping = {
     'python': ('https://docs.python.org/3', None),
     'flask': ('http://flask.pocoo.org/docs/1.0', None),
+    'flask_wtf': ('http://flask-wtf.readthedocs.io/en/stable/', None),
     'pony': ('https://docs.ponyorm.com/', None),
 }

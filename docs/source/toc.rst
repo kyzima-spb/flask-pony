@@ -8,3 +8,4 @@ Flask-Pony
    repositories
    views
    forms
+   api_reference
