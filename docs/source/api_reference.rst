@@ -3,8 +3,18 @@
 API Reference
 =============
 
+.. autofunction:: flask_pony.decorators.route
+
+Repositories
+------------
+
 .. autoclass:: flask_pony.repositories.Repository
     :members:
+
+.. autoclass:: flask_pony.repositories.PonyRepository
+    :members:
+    :show-inheritance:
+
 
 Views mixins
 ------------

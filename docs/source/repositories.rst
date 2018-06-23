@@ -14,14 +14,15 @@
 
     -- Martin Fowler
 
-Пока что это лишь самая простая реализация данного шаблона: :py:class:`repositories.PonyRepository`
+Пока что это лишь самая простая реализация данного шаблона: :py:class:`~flask_pony.repositories.PonyRepository`
 
 В первую очередь репозитории нужны для работы с HTML-формами.
 Благодаря им, формы могут быть обработаны автоматически.
 
 Базовый репозиторий рассчитан на работу только с одной сущностью.
-Для создания репозитория, необходимо отнаследоваться от базового класса :py:class:`repositories.PonyRepository`
-и переопределить статическое свойство :py:attr:`~repositories.PonyRepository.entity_class`, которое содержит ссылку на класс сущности.
+Для создания репозитория, необходимо отнаследоваться от базового класса :py:class:`~flask_pony.repositories.PonyRepository`
+и переопределить статическое свойство :py:attr:`~flask_pony.repositories.PonyRepository.entity_class`,
+которое содержит ссылку на класс сущности.
 
 .. code-block:: python
 

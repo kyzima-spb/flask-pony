@@ -29,35 +29,60 @@ class Repository(with_metaclass(ABCMeta)):
 
     @abstractmethod
     def create(self, **attributes):
-        pass
+        """
+        Creates a new entity and saves it to the database.
+
+        Arguments:
+            attributes (dict): Entity attributes.
+        """
 
     @abstractmethod
     def delete(self, entity):
-        pass
+        """
+        Removes the entity from the database.
+
+        Arguments:
+            entity (object): The entity instance.
+        """
 
     @abstractmethod
     def get(self, *pk):
-        pass
+        """Returns an entity instance selected by its primary key."""
 
     @abstractmethod
     def get_all(self):
-        pass
+        """Returns all entities from the database."""
 
     @abstractmethod
-    def get_one(self, **kwargs):
-        pass
+    def get_one(self, **condition):
+        """Returns one entity from the database using the condition."""
 
     @abstractmethod
     def update(self, entity, attributes):
-        pass
+        """
+        Updates the entity with the values of the passed attributes.
+
+        Arguments:
+            entity (object): The entity instance.
+            attributes (dict): Entity attributes with new values.
+        """
 
 
 class PonyRepository(Repository):
-    """Repository for working with Pony entities."""
+    """
+    Repository for working with Pony entities.
+
+    Attributes:
+        entity_class (:py:class:`~Database.Entity`): A reference to the entity class.
+    """
 
     entity_class = None
 
     def get_entity_class(self):
+        """
+        Returns:
+            :py:class:`~Database.Entity`: A reference to the entity class.
+        """
         if self.entity_class is None:
             raise AttributeError('You must assign the value of the attribute "entity_class".')
         return self.entity_class
@@ -73,6 +98,10 @@ class PonyRepository(Repository):
         flush()
 
     def get(self, *pk):
+        """
+        Return an entity instance selected by its primary key.
+        Raises the ObjectNotFound exception if there is no such object.
+        """
         return self.entity_class.__getitem__(pk)
 
     def get_all(self):
