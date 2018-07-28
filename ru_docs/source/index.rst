@@ -74,10 +74,19 @@
 В момент вызова метод :py:meth:`Pony.connect` произойдет вызов методов :py:meth:`Database.bind` и :py:meth:`Database.generate_mapping`.
 
 
-Описание сущностей
-------------------
+Определение сущностей
+---------------------
 
 .. note::
+
+    Здесь, и в других разделах документации, подразумевается,
+    что у вас в модуле ``__init__.py`` объявлена переменная ``app``,
+    которая содержит экземпляр приложения и проинициализировано расширение ``Flask-Pony``,
+    доступное через переменую ``pony``.
+
+    Here and in other sections of this guide means that your ``__init__.py`` module has an ``app`` variable
+    that contains application instance and initialized ``Flask-Pony`` extension via the ``pony`` variable.
+
 
     Здесь, и в других разделах документации, подразумевается,
     что у вас в модуле ``__init__.py`` создан объект приложения ``app`` и проинициализировано расширение ``Flask-Pony``,
