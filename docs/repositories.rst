@@ -3,26 +3,25 @@
 Repositories
 ============
 
-``Flask-Pony`` реализует шаблон проектирования Repository_:
+``Flask-Pony`` implements a design pattern Repository_:
 
-    **Репозиторий** - посредник между уровнями области определения и распределения данных,
-    использует интерфейс, схожий с коллекциями для доступа к объектам области определения.
+    **Repository** is a mediator between definition domain and data distribution levels,
+    uses an interface similar to collections for access to objects in definition domain.
 
-    **Область определения** - это само хранилище или доменная модель.
+    **Definition domain** is the storage itself or the domain model.
 
-    **Область распределения** - это `Data Mapper`_.
+    **Distribution area** - `Data Mapper`_.
 
     -- Martin Fowler
 
-Пока что это лишь самая простая реализация данного шаблона: :py:class:`~flask_pony.repositories.PonyRepository`
+So far this is just simplest implementation of this template: :py:class:`~flask_pony.repositories.PonyRepository`
 
-В первую очередь репозитории нужны для работы с HTML-формами.
-Благодаря им, формы могут быть обработаны автоматически.
+First of all, repositories are needed to work with HTML-forms.
+Thanks to them, the forms can be processed automatically.
 
-Базовый репозиторий рассчитан на работу только с одной сущностью.
-Для создания репозитория, необходимо отнаследоваться от базового класса :py:class:`~flask_pony.repositories.PonyRepository`
-и переопределить статическое свойство :py:attr:`~flask_pony.repositories.PonyRepository.entity_class`,
-которое содержит ссылку на класс сущности.
+To create a repository, you must inherit from base class :py:class:`~flask_pony.repositories.PonyRepository`
+and override the static property :py:attr:`~flask_pony.repositories.PonyRepository.entity_class`,
+that contains a reference to the entity class.
 
 .. code-block:: python
 
@@ -37,16 +36,16 @@ Repositories
         entity_class = Category
 
 
-В репозитории можно инкапсулировать сложные запросы на выборку данных.
-Репозиторий может работать с разным количеством типов сущностей, в зависимости от вашей задачи.
-Имена репозиториев не обязательно должны совпадать с именами сущностей.
+In repository, you can encapsulate complex queries for data sampling.
+Repository can work with a different number of entity types, depending on your task.
+Repository names don't have to be the same as entity names
 
-Другими словами, вы можете расширить базовый репозиторий любой нужной вам логикой
-и затем использовать его в любом месте вашего веб приложения.
+In other words, you can extend basic repository of any logic you need
+and then use it anywhere in your web application.
 
-Если в сущности есть атрибуты с типом :py:class:`Set`,
-то построитель форм не делает никаких предположений о том, как нужно отрисовать данное поле.
-Пользователь сам решает, как и какие элементы формы, нужно создать, а так же сам пишет обработчик для этих полей.
+If entity has attributes with a type :py:class:`Set`,
+then form builder does not make any assumptions about this field rendering.
+User decides how and what form elements to create, and also whites the handler for these fields
 
 .. _Repository: https://martinfowler.com/eaaCatalog/repository.html
 .. _Data Mapper: https://martinfowler.com/eaaCatalog/dataMapper.html
