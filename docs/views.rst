@@ -123,7 +123,7 @@ CreateView
 For creating a new entity is using the view :py:class:`~flask_pony.views.CreateView`.
 
 If an entity successfully created, is necessary to do a mandatory redirecting.
-It is necessary to protect from resending the form by pressing the key `` F5``.
+It is necessary to protect from resending the form by pressing the key ``F5``.
 Static property :py:attr:`~flask_pony.views.FormMixin.success_endpoint`, should be redefined for that.
 
 .. code-block:: python
@@ -162,7 +162,7 @@ UpdateView
 ----------
 
 For editing an entity is using the view :py:class:`~flask_pony.views.UpdateView`.
-The properties are the same as for `` CreateView``, only the route must contain one parameter `` id`` - entity identifier.
+The properties are the same as for ``CreateView``, only the route must contain one parameter ``id`` - entity identifier.
 
 If an entity isn't found in the database then the code ``404`` will be returned.
 
@@ -202,7 +202,7 @@ DeleteView
 ----------
 
 For deleting an entity is using the view :py:class:`~flask_pony.views.DeleteView`.
-The properties are the same as for `` CreateView``, only the route must contain one parameter `` id`` - entity identifier.
+The properties are the same as for ``CreateView``, only the route must contain one parameter ``id`` - entity identifier.
 
 .. code-block:: python
 
