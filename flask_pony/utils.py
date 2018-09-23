@@ -20,14 +20,23 @@ from flask import current_app
 
 
 __all__ = (
-    'camelcase2list', 'get_route_param_names'
+    'camel_to_list', 'camel_to_snake', 'snake_to_camel',
+    'get_route_param_names'
 )
 
 
-def camelcase2list(s, lower=False):
+def camel_to_list(s, lower=False):
     """Converts a camelcase string to a list."""
     s = re.findall(r'([A-Z][a-z0-9]+)', s)
     return [w.lower() for w in s] if lower else s
+
+
+def camel_to_snake(name):
+    return '_'.join(camel_to_list(name, lower=True))
+
+
+def snake_to_camel(name):
+    return ''.join(name.title().split('_'))
 
 
 def get_route_param_names(endpoint):
@@ -37,20 +46,3 @@ def get_route_param_names(endpoint):
         return next(g).arguments
     except KeyError:
         return {}
-
-
-def camel_to_snake(name):
-    result = []
-
-    for i, c in enumerate(name):
-        if c.isupper() and i:
-            result.append(name[:i])
-            name = name[i:]
-
-    result.append(name)
-
-    return '_'.join(result).lower()
-
-
-def snake_to_camel(name):
-    return ''.join(name.title().split('_'))

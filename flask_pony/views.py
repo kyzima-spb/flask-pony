@@ -19,7 +19,7 @@ from flask.views import MethodView
 from pony.orm import ObjectNotFound
 
 from .orm import FormBuilder
-from .utils import get_route_param_names, camelcase2list
+from .utils import get_route_param_names, camel_to_list
 
 
 class FormMixin(object):
@@ -142,9 +142,8 @@ class BaseView(MethodView):
 
         """
         if self.template_name is None:
-            name = camelcase2list(self.__class__.__name__)
-            name = '{}/{}.html'.format(name.pop(0), '_'.join(name))
-            self.template_name = name.lower()
+            name = camel_to_list(self.__class__.__name__, lower=True)
+            self.template_name = '{1}/{0}.html'.format(name.pop(), '_'.join(name))
         return self.template_name
 
     def render_template(self, **context):
