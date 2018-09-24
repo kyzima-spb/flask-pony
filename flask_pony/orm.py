@@ -20,6 +20,7 @@ import wtforms.validators as wtf_validators
 
 from .forms import Form, EntityField
 from . import validators
+from .utils import camel_to_snake, camel_to_list
 
 
 class Factory(object):
@@ -74,6 +75,9 @@ class FormBuilder(object):
         """Creates the form element for working with the collection of entities."""
         return None, options
 
+    def _create_label(self, label):
+        return camel_to_snake(label).capitalize().replace('_', ' ')
+
     def _create_plain_field(self, attr, options):
         """Creates the form element."""
         method = self._get_field_method(attr.py_type) or self._create_other_field
@@ -112,7 +116,7 @@ class FormBuilder(object):
             return self
 
         kwargs = {
-            'label': attr.name,
+            'label': self._create_label(attr.name),
             'default': attr.default,
             'validators': [],
         }
