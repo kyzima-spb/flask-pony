@@ -158,11 +158,21 @@ class EntityView(BaseView, EntityMixin):
 class ProcessFormView(EntityView, FormMixin):
     """Render a form on GET and processes it on POST."""
 
-    form_class = FormBuilder
+    form_builder = None
+    form_class = None
+
+    def get_form_builder(self):
+        if self.form_builder is None:
+            raise RuntimeError('FormBuilder is not specified')
+
+        entity_class = self.get_repository().get_entity_class()
+        self.form_builder.set_entity_class(entity_class)
+
+        return self.form_builder
 
     def get_form_class(self):
-        if issubclass(self.form_class, FormBuilder):
-            self.form_class = self.form_class.get_instance(self.get_repository().get_entity_class())
+        if self.form_class is None:
+            return self.get_form_builder().get_form()
         return super(ProcessFormView, self).get_form_class()
 
     # def process_form(self, form):

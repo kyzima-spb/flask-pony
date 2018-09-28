@@ -51,14 +51,18 @@ class FormBuilderException(Exception):
 class FormBuilder(object):
     field_constructor = Factory()
 
-    def __init__(self, entity_class, base_class=None, excludes=None, skip_pk=True):
+    def __init__(self, entity_class=None, base_class=None, excludes=None, skip_pk=True):
+        self._entity_class = None
         self._fields = OrderedDict()
         self._buttons = OrderedDict()
 
-        self._entity_class = entity_class
+        self.set_entity_class(entity_class)
         self._base_class = base_class
         self._excludes = set(excludes or [])
         self._skip_pk = skip_pk
+
+    def set_entity_class(self, entity_class):
+        self._entity_class = entity_class
 
     def _field_numeric(self, attr, options):
         miN = attr.kwargs.get('min', attr.kwargs.get('unsigned') and 0)
