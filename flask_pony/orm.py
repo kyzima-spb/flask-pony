@@ -20,7 +20,11 @@ import wtforms.validators as wtf_validators
 
 from .forms import Form, EntityField
 from . import validators
-from .utils import camel_to_snake, camel_to_list
+from .utils import camel_to_snake
+
+
+def get_entity_names(entity_class):
+    return [attr.name for attr in entity_class._attrs_]
 
 
 class Factory(object):
@@ -38,6 +42,10 @@ class Factory(object):
                 self.__types[tp] = func
             return func
         return decorator
+
+
+class FormBuilderException(Exception):
+    pass
 
 
 class FormBuilder(object):
@@ -71,10 +79,6 @@ class FormBuilder(object):
             return getattr(self, method.__name__)
         return method
 
-    def _create_collection_field(self, attr, options):
-        """Creates the form element for working with the collection of entities."""
-        return None, options
-
     def _create_label(self, label):
         return camel_to_snake(label).capitalize().replace('_', ' ')
 
@@ -88,11 +92,6 @@ class FormBuilder(object):
 
         return klass, options
 
-    def _create_pk_field(self, attr, options):
-        """Creates the form element for working with primary key."""
-        if attr.auto or self._skip_pk:
-            return None, options
-
     def _create_relational_field(self, attr, options):
         """Creates the form element for working with entity relationships."""
         options['entity_class'] = attr.py_type
@@ -101,49 +100,63 @@ class FormBuilder(object):
 
     def _create_other_field(self, attr, options):
         """Creates a custom form element. Called when the element was not found."""
-        return None, options
+        msg = 'The form builder does not know the attribute type: {}.'.format(attr.py_type)
+        raise NotImplementedError(msg)
 
-    def add(self, attr, field_class=None, **options):
+    def add(self, name, field_class=None, **options):
         """Adds an element to the form based on the entity attribute."""
         # print(attr.name, attr.py_type, getattr(attr, 'set', None))
         # print(dir(attr))
         # print(attr, attr.is_relation, attr.is_collection)
         # print(attr.is_pk, attr.auto, attr.is_unique, attr.is_part_of_unique_index, attr.composite_keys)
 
-        def add(klass, options):
-            if klass:
-                self._fields[attr.name] = field_class(**options) if field_class else klass(**options)
+        attr = getattr(self._entity_class, name)
+
+        if attr.is_pk and (attr.auto or self._skip_pk):
             return self
 
         kwargs = {
-            'label': self._create_label(attr.name),
             'default': attr.default,
             'validators': [],
         }
         kwargs.update(options)
 
-        if attr.is_pk:
-            return add(*self._create_pk_field(attr, kwargs))
-
         if attr.is_collection:
-            return add(*self._create_collection_field(attr, kwargs))
+            if field_class is None:
+                return self
+            return self.add_field(name, field_class, **kwargs)
 
-        validator = wtf_validators.InputRequired() if attr.is_required and not attr.is_pk else wtf_validators.Optional()
+        validator = wtf_validators.InputRequired() if attr.is_required else wtf_validators.Optional()
         kwargs['validators'].insert(0, validator)
 
         if attr.is_relation:
-            return add(*self._create_relational_field(attr, kwargs))
+            klass, kwargs = self._create_relational_field(attr, kwargs)
+        else:
+            klass, kwargs = self._create_plain_field(attr, kwargs)
 
-        return add(*self._create_plain_field(attr, kwargs))
+        return self.add_field(name, field_class or klass, **kwargs)
+
+    def add_field(self, name, field_class, **options):
+        """Adds an element to the form.
+
+        Args:
+            name (str): attribute name.
+            field_class (:py:class:`~wtforms.fields.Field`): A reference to the form field class.
+            options (dict): kwargs.
+        """
+        if 'label' not in options:
+            options['label'] = self._create_label(name)
+        self._fields[name] = field_class(**options)
+        return self
 
     def add_button(self, name, button_class=wtf_fields.SubmitField, **options):
         """Adds a button to the form."""
         self._buttons[name] = button_class(**options)
 
     def build_form(self):
-        for attr in self._entity_class._attrs_:
-            if attr.name not in self._excludes:
-                self.add(attr)
+        for name in get_entity_names(self._entity_class):
+            if name not in self._excludes:
+                self.add(name)
 
     def get_form(self):
         self.build_form()
@@ -153,7 +166,7 @@ class FormBuilder(object):
         props.update(self._fields)
         props.update(self._buttons)
         form = type(classname, (base,), props)
-        form._attr_names_ = self._fields.keys()
+        form._attr_names_ = set(get_entity_names(self._entity_class)) & set(self._fields.keys())
         return form
 
     @field_constructor(bool)
