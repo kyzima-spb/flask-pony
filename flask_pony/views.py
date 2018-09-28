@@ -163,7 +163,7 @@ class ProcessFormView(EntityView, FormMixin):
 
     def get_form_builder(self):
         if self.form_builder is None:
-            raise RuntimeError('FormBuilder is not specified')
+            self.form_builder = FormBuilder()
 
         entity_class = self.get_repository().get_entity_class()
         self.form_builder.set_entity_class(entity_class)
