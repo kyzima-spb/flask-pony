@@ -14,7 +14,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from flask import render_template, request, abort, redirect, url_for
+from flask import render_template, request, abort, redirect, url_for, flash
 from flask.views import MethodView
 from pony.orm import ObjectNotFound
 
@@ -48,7 +48,15 @@ class FormMixin(object):
         Returns:
             :py:class:`~flask_wtf.FlaskForm`: An instance of the form class.
         """
+        if 'obj' not in kwargs:
+            kwargs['obj'] = self.get_object()
         return self.get_form_class()(*args, **kwargs)
+
+    def get_object(self):
+        return getattr(self, '_object', None)
+
+    def set_object(self, obj):
+        self._object = obj
 
     def get_success_url(self, obj=None):
         """
@@ -67,6 +75,14 @@ class FormMixin(object):
             kwargs = {}
 
         return url_for(self.success_endpoint, **kwargs)
+
+    def form_valid(self, form):
+        """Runs if the form is processed successfully."""
+        raise NotImplementedError
+
+    def form_invalid(self, form):
+        """Runs if errors occurred while processing the form."""
+        raise NotImplementedError
 
 
 class EntityMixin(object):
@@ -175,15 +191,18 @@ class ProcessFormView(EntityView, FormMixin):
             return self.get_form_builder().get_form()
         return super(ProcessFormView, self).get_form_class()
 
-    # def process_form(self, form):
-    #     """"""
-    #     raise NotImplementedError
-    #
-    # def form_valid(selfself, form, entity):
-    #     """Runs if the form is processed successfully."""
-    #
-    # def form_invalid(self, form, entity):
-    #     """Runs if errors occurred while processing the form."""
+    def get_entity_or_abort(self, *pk):
+        entity = super(ProcessFormView, self).get_entity_or_abort(*pk)
+        self.set_object(entity)
+        return entity
+
+    def post(self, *args, **kwargs):
+        form = self.get_form()
+
+        if form.validate_on_submit():
+            return self.form_valid(form)
+
+        return self.form_invalid(form)
 
 
 class ListView(EntityView):
@@ -205,53 +224,59 @@ class ShowView(EntityView):
 class CreateView(ProcessFormView):
     """View for creating a new entity."""
 
-    def _create_entity(self, form):
-        kwargs = form.entity_kwargs
-        return self.get_repository().create(**kwargs)
-
     def get(self):
         return self.render_template(form=self.get_form())
 
-    def post(self):
-        form = self.get_form(request.form)
+    def form_valid(self, form):
+        kwargs = form.entity_kwargs
+        entity = self.get_repository().create(**kwargs)
+        self.set_object(entity)
+        return redirect(self.get_success_url(entity))
 
-        if form.validate_on_submit():
-            entity = self._create_entity(form)
-            return redirect(self.get_success_url(entity))
-
+    def form_invalid(self, form):
         return self.render_template(form=form)
 
 
 class UpdateView(ProcessFormView):
     """View for updating an entity."""
 
-    def _update_entity(self, entity, form):
-        kwargs = form.entity_kwargs
-        self.get_repository().update(entity, **kwargs)
-
     def get(self, id):
         entity = self.get_entity_or_abort(id)
-        form = self.get_form(obj=entity)
+        form = self.get_form()
         return self.render_template(form=form, entity=entity)
+
+    def form_valid(self, form):
+        entity = self.get_object()
+        kwargs = form.entity_kwargs
+        self.get_repository().update(entity, **kwargs)
+        return redirect(self.get_success_url(entity))
+
+    def form_invalid(self, form):
+        return self.render_template(form=form, entity=self.get_object())
 
     def post(self, id):
-        entity = self.get_entity_or_abort(id)
-        form = self.get_form(request.form, obj=entity)
-
-        if form.validate_on_submit():
-            self._update_entity(entity, form)
-            return redirect(self.get_success_url(entity))
-
-        return self.render_template(form=form, entity=entity)
+        self.get_entity_or_abort(id)
+        return super(UpdateView, self).post()
 
 
 class DeleteView(ProcessFormView):
     """View for deleting an entity."""
 
-    def post(self, id):
-        entity = self.get_entity_or_abort(id)
+    def form_valid(self, form):
+        entity = self.get_object()
         entity.delete()
         return redirect(self.get_success_url())
+
+    # def form_invalid(self, form):
+    #     flash('Could not delete entity.', 'error')
+    #     return redirect(self.get_success_url())
+
+    def post(self, id):
+        return self.delete(id)
+
+    def delete(self, id):
+        self.get_entity_or_abort(id)
+        return self.form_valid(None)
 
 
 __all__ = (
