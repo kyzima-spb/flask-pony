@@ -56,6 +56,22 @@ class UniqueEntityValidator(EntityValidator):
             raise StopValidation(msg)
 
 
+class EntityExistsValidator(EntityValidator):
+    """
+    Валидатор проверяет, что сущность существует.
+    Введенное значение должно быть уникальным атрибутом сущности.
+    """
+
+    def __call__(self, form, field):
+        kwargs = {
+            field.name: field.data
+        }
+
+        if not self.entity_class.exists(**kwargs):
+            msg = self.message or 'This entity is not exists.'
+            raise StopValidation(msg)
+
+
 class UUIDValidator(Validator):
     def __call__(self, form, field):
         try:
