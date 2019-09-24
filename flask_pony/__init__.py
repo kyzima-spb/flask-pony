@@ -90,7 +90,11 @@ class Pony(object):
         facade.connect()
 
     def init_app(self, app):
-        self.app = app
+        if not hasattr(app, 'extensions'):
+            app.extensions = {}
+
+        app.extensions['flask_pony'] = self
+
         app.config.setdefault('PONY', {})
 
         app.before_request(start_db_session)
