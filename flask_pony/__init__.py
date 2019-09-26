@@ -1,5 +1,3 @@
-# coding: utf-8
-#
 # Copyright 2017 Kirill Vercetti
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -96,6 +94,9 @@ class Pony(object):
         app.extensions['flask_pony'] = self
 
         app.config.setdefault('PONY', {})
+
+        from .converters import EntityConverter
+        app.url_map.converters['pk'] = EntityConverter
 
         app.before_request(start_db_session)
 
